@@ -27,8 +27,8 @@ export default function SARApplications() {
   const [instituteInfo, setInstituteInfo] = useState({
     applicationId: 'RGUKT-IS-20250905',
     department: 'Institute Information',
-    status: 'Draft',
-    progress: 0,
+    status: 'Completed',
+    progress: 100,
     startDate: '6 Sept 2025',
     lastModified: '6 Sept 2025',
     modifiedBy: 'rgukt@example.com'
@@ -59,9 +59,11 @@ export default function SARApplications() {
   const handleProgressUpdate = (applicationId: string, progress: number) => {
     // Update institute info progress
     if (applicationId === instituteInfo.applicationId) {
+      const newStatus = progress === 100 ? 'Completed' : progress > 0 ? 'In Progress' : 'Draft';
       setInstituteInfo(prev => ({
         ...prev,
         progress,
+        status: newStatus,
         lastModified: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
       }));
     } else {
@@ -71,7 +73,8 @@ export default function SARApplications() {
           app.applicationId === applicationId 
             ? { 
                 ...app, 
-                progress, 
+                progress,
+                status: progress === 100 ? 'Completed' : progress > 0 ? 'In Progress' : 'Draft',
                 lastModified: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
               }
             : app
@@ -162,6 +165,30 @@ export default function SARApplications() {
   const availableDepartments = departments.filter(dept => 
     !departmentApplications.some(app => app.department === dept.name)
   );
+
+  // Function to get progress bar color based on progress percentage
+  const getProgressBarColor = (progress: number) => {
+    if (progress === 0) return 'bg-gray-300';
+    if (progress < 25) return 'bg-red-500';
+    if (progress < 50) return 'bg-orange-500';
+    if (progress < 75) return 'bg-yellow-500';
+    if (progress < 100) return 'bg-blue-500';
+    return 'bg-green-500';
+  };
+
+  // Function to get status badge color
+  const getStatusBadgeColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'in progress':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'draft':
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
 
   if (showDepartmentSelection) {
     return (
@@ -315,18 +342,18 @@ export default function SARApplications() {
                 {instituteInfo.department}
               </div>
               <div>
-                <Badge variant="outline" className="bg-gray-100 text-gray-700">
+                <Badge variant="outline" className={getStatusBadgeColor(instituteInfo.status)}>
                   {instituteInfo.status}
                 </Badge>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-16 bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full" 
+                    className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(instituteInfo.progress)}`}
                     style={{ width: `${instituteInfo.progress}%` }}
                   ></div>
                 </div>
-                <span className="text-sm text-gray-600">{instituteInfo.progress}%</span>
+                <span className="text-sm text-gray-600 font-medium">{instituteInfo.progress}%</span>
               </div>
               <div className="flex items-center gap-1 text-sm text-gray-600">
                 <Calendar className="w-4 h-4" />
@@ -346,9 +373,10 @@ export default function SARApplications() {
                   size="sm"
                   onClick={() => handleFillForm(instituteInfo.applicationId)}
                   className="flex items-center gap-1"
+                  disabled={instituteInfo.progress === 100}
                 >
                   <ExternalLink className="w-4 h-4" />
-                  Fill
+                  {instituteInfo.progress === 100 ? 'View' : 'Fill'}
                 </Button>
               </div>
             </div>
@@ -391,18 +419,18 @@ export default function SARApplications() {
                   {application.department}
                 </div>
                 <div>
-                  <Badge variant="outline" className="bg-gray-100 text-gray-700">
+                  <Badge variant="outline" className={getStatusBadgeColor(application.status)}>
                     {application.status}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-16 bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full" 
+                      className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(application.progress)}`}
                       style={{ width: `${application.progress}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-600">{application.progress}%</span>
+                  <span className="text-sm text-gray-600 font-medium">{application.progress}%</span>
                 </div>
                 <div className="flex items-center gap-1 text-sm text-gray-600">
                   <Calendar className="w-4 h-4" />
@@ -422,9 +450,10 @@ export default function SARApplications() {
                     size="sm"
                     onClick={() => handleFillForm(application.applicationId)}
                     className="flex items-center gap-1"
+                    disabled={application.progress === 100}
                   >
                     <ExternalLink className="w-4 h-4" />
-                    Fill
+                    {application.progress === 100 ? 'View' : 'Fill'}
                   </Button>
                 </div>
               </div>

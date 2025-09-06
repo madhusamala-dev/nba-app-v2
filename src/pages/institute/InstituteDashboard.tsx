@@ -1,77 +1,115 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import InstituteLayout from '@/components/InstituteLayout';
+import { Calendar, Clock, FileText, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { getCurrentUser } from '@/lib/auth';
-import { getInstitutionById, getSARApplicationsByInstitution } from '@/lib/data';
-import { Institution, SARApplication } from '@/lib/types';
+import InstituteLayout from '@/components/InstituteLayout';
+import { getSARApplicationsByInstitution, getInstitutionById } from '@/lib/data';
+import { useAuth } from '@/lib/auth';
 
 export default function InstituteDashboard() {
-  const navigate = useNavigate();
-  const [institution, setInstitution] = useState<Institution | null>(null);
-  const [sarApplications, setSarApplications] = useState<SARApplication[]>([]);
-  const currentUser = getCurrentUser();
+  const { user } = useAuth();
+  const [sarApplications, setSarApplications] = useState<any[]>([]);
+  const [institution, setInstitution] = useState<any>(null);
 
   useEffect(() => {
-    if (currentUser?.institutionId) {
-      const inst = getInstitutionById(currentUser.institutionId);
+    if (user?.institutionId) {
+      console.log('Loading data for institution:', user.institutionId);
+      
+      // Get institution details
+      const inst = getInstitutionById(user.institutionId);
+      console.log('Institution found:', inst);
       setInstitution(inst);
       
-      if (inst) {
-        const apps = getSARApplicationsByInstitution(inst.id);
-        setSarApplications(apps);
-      }
+      // Get SAR applications
+      const apps = getSARApplicationsByInstitution(user.institutionId);
+      console.log('SAR applications found:', apps);
+      
+      // Update Institute Information to 100% progress if it exists
+      const updatedApps = apps.map(app => {
+        if (app.departmentName === 'Institute Information') {
+          return {
+            ...app,
+            completionPercentage: 100,
+            status: 'completed'
+          };
+        }
+        return app;
+      });
+      
+      setSarApplications(updatedApps);
     }
-  }, [currentUser]);
+  }, [user]);
 
-  const calculateOverallProgress = () => {
-    if (sarApplications.length === 0) return 0;
-    const totalProgress = sarApplications.reduce((sum, app) => sum + app.completionPercentage, 0);
-    return Math.round(totalProgress / sarApplications.length);
+  // Function to get progress bar color based on progress percentage
+  const getProgressBarColor = (progress: number) => {
+    if (progress === 0) return 'bg-gray-300';
+    if (progress < 25) return 'bg-red-500';
+    if (progress < 50) return 'bg-orange-500';
+    if (progress < 75) return 'bg-yellow-500';
+    if (progress < 100) return 'bg-blue-500';
+    return 'bg-green-500';
   };
 
-  const getEarliestStartDate = () => {
-    if (sarApplications.length === 0) return null;
-    
-    const dates = sarApplications.map(app => new Date(app.applicationStartDate));
-    const earliestDate = new Date(Math.min(...dates.map(date => date.getTime())));
-    return earliestDate;
+  // Function to get status badge color and icon
+  const getStatusInfo = (status: string, progress: number) => {
+    const normalizedStatus = status.toLowerCase();
+    if (progress === 100 || normalizedStatus === 'completed') {
+      return {
+        color: 'bg-green-100 text-green-800 border-green-200',
+        icon: <CheckCircle className="w-3 h-3" />,
+        text: 'Completed'
+      };
+    }
+    if (progress > 0 || normalizedStatus === 'in-progress') {
+      return {
+        color: 'bg-blue-100 text-blue-800 border-blue-200',
+        icon: <Clock className="w-3 h-3" />,
+        text: 'In Progress'
+      };
+    }
+    return {
+      color: 'bg-gray-100 text-gray-700 border-gray-200',
+      icon: <AlertCircle className="w-3 h-3" />,
+      text: 'Draft'
+    };
   };
 
-  const calculateEndDate = (startDate: Date) => {
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 90); // 90 days for SAR completion
-    return endDate;
-  };
+  // Calculate overall progress
+  const totalApplications = sarApplications.length;
+  const overallProgress = totalApplications > 0 
+    ? Math.round(sarApplications.reduce((sum, app) => sum + app.completionPercentage, 0) / totalApplications)
+    : 0;
+
+  // SAR Application dates
+  const applicationStartDate = sarApplications.length > 0 
+    ? new Date(sarApplications[0].applicationStartDate)
+    : new Date();
+  
+  const applicationEndDate = new Date(applicationStartDate);
+  applicationEndDate.setDate(applicationStartDate.getDate() + 90); // 90 days completion window
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
     });
   };
 
-  const overallProgress = calculateOverallProgress();
-  const startDate = getEarliestStartDate();
-  const endDate = startDate ? calculateEndDate(startDate) : null;
-
   // Sort applications to show Institute Information first
   const sortedApplications = [...sarApplications].sort((a, b) => {
-    if (a.departmentId === 'institute-info') return -1;
-    if (b.departmentId === 'institute-info') return 1;
-    return 0;
+    if (a.departmentName === 'Institute Information') return -1;
+    if (b.departmentName === 'Institute Information') return 1;
+    return a.departmentName.localeCompare(b.departmentName);
   });
 
   if (!institution) {
     return (
-      <InstituteLayout title="Dashboard">
+      <InstituteLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading dashboard...</p>
           </div>
         </div>
@@ -80,186 +118,159 @@ export default function InstituteDashboard() {
   }
 
   return (
-    <InstituteLayout title="Dashboard">
-      <div className="space-y-6">
-        {/* Welcome Section */}
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Welcome to {institution.name}
-                </h2>
-                <p className="text-gray-600">
-                  Institution Code: {institution.institutionCode} • Category: {institution.institutionCategory}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Manage your NBA accreditation applications and track progress
-                </p>
-              </div>
-              <div className="text-right">
-                <Badge variant="outline" className="mb-2">
-                  {institution.tierCategory || 'Tier II'}
-                </Badge>
-                <p className="text-sm text-gray-600">
-                  Est. {institution.establishedYear}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <InstituteLayout>
+      <div className="space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Institute Dashboard</h1>
+          <p className="text-gray-600 mt-2">
+            Welcome to {institution.name} - NBA Accreditation Management System
+          </p>
+        </div>
 
-        {/* SAR Application Stage Dashboard */}
-        {sarApplications.length > 0 && (
-          <>
-            {/* SAR Application Overview */}
+        {/* SAR Application Stage */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FileText className="w-4 h-4 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900">SAR Application Stage</h2>
+          </div>
+
+          {/* Timeline and Progress Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  SAR Application Stage
-                </CardTitle>
-                <CardDescription>
-                  Track your Self Assessment Report application progress
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Application Start Date</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                  {/* Application Start Date */}
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">
-                      {startDate ? formatDate(startDate) : 'N/A'}
-                    </div>
-                    <p className="text-sm text-gray-600">Application Start Date</p>
-                  </div>
-
-                  {/* End Date */}
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600 mb-1">
-                      {endDate ? formatDate(endDate) : 'N/A'}
-                    </div>
-                    <p className="text-sm text-gray-600">End Date</p>
-                  </div>
-
-                  {/* Total Applications */}
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600 mb-1">
-                      {sarApplications.length}
-                    </div>
-                    <p className="text-sm text-gray-600">Total Applications</p>
-                  </div>
-
-                  {/* Overall Progress */}
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600 mb-1">
-                      {overallProgress}%
-                    </div>
-                    <p className="text-sm text-gray-600">Overall Progress</p>
-                  </div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {formatDate(applicationStartDate)}
                 </div>
-
-                {/* Overall Progress Bar */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Overall Progress</span>
-                    <span>{overallProgress}%</span>
-                  </div>
-                  <Progress value={overallProgress} className="h-3" />
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  SAR application period began
+                </p>
               </CardContent>
             </Card>
 
-            {/* SAR Applications List */}
             <Card>
-              <CardHeader>
-                <CardTitle>SAR Applications</CardTitle>
-                <CardDescription>
-                  Your Self Assessment Report applications
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Application End Date</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {sortedApplications.map((app, index) => (
-                    <Card key={app.id} className={`${app.departmentId === 'institute-info' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white border-2 border-gray-300 text-sm font-semibold">
-                              {index + 1}
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-lg text-gray-900">
-                                {app.departmentName}
-                              </h4>
-                              <p className="text-sm text-gray-600 mt-1">
-                                Start Date: {new Date(app.applicationStartDate).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric'
-                                })}
-                              </p>
-                            </div>
+                <div className="text-2xl font-bold text-orange-600">
+                  {formatDate(applicationEndDate)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  90-day completion window
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">
+                  {totalApplications}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  SAR applications in progress
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Overall Progress</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {overallProgress}%
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(overallProgress)}`}
+                    style={{ width: `${overallProgress}%` }}
+                  ></div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* SAR Applications List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                SAR Applications
+              </CardTitle>
+              <CardDescription>
+                Track progress of your Self Assessment Report applications
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {sortedApplications.map((application, index) => {
+                  const statusInfo = getStatusInfo(application.status, application.completionPercentage);
+                  const isInstituteInfo = application.departmentName === 'Institute Information';
+                  
+                  return (
+                    <div 
+                      key={application.id} 
+                      className={`p-4 border rounded-lg transition-all duration-200 hover:shadow-md ${
+                        isInstituteInfo ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            isInstituteInfo ? 'bg-blue-100' : 'bg-gray-100'
+                          }`}>
+                            <span className="text-lg">
+                              {isInstituteInfo ? '🏛️' : '🎓'}
+                            </span>
                           </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {application.departmentName}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {application.applicationId}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-4">
                           <div className="text-right">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <span className="text-sm text-gray-600">Progress:</span>
-                              <span className="font-semibold text-gray-900">{app.completionPercentage}%</span>
-                            </div>
-                            <div className="w-32">
-                              <Progress value={app.completionPercentage} className="h-2" />
+                            <Badge variant="outline" className={statusInfo.color}>
+                              <div className="flex items-center gap-1">
+                                {statusInfo.icon}
+                                {statusInfo.text}
+                              </div>
+                            </Badge>
+                            <div className="flex items-center gap-2 mt-2">
+                              <div className="w-24 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(application.completionPercentage)}`}
+                                  style={{ width: `${application.completionPercentage}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">
+                                {application.completionPercentage}%
+                              </span>
                             </div>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>SAR Applications</CardTitle>
-              <CardDescription>Manage your Self Assessment Reports</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                className="w-full" 
-                onClick={() => navigate('/institute/sar')}
-              >
-                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                View SAR Applications
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Institution Profile</CardTitle>
-              <CardDescription>View and manage institution details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>AISHE Code:</span>
-                  <span className="font-medium">{institution.aisheCode || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Coordinator:</span>
-                  <span className="font-medium">{institution.coordinatorName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Email:</span>
-                  <span className="font-medium">{institution.coordinatorEmail}</span>
-                </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

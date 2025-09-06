@@ -105,8 +105,8 @@ const mockSARApplications: SARApplication[] = [
     institutionId: '1',
     departmentId: 'institute-info',
     departmentName: 'Institute Information',
-    status: 'draft',
-    completionPercentage: 0,
+    status: 'completed',
+    completionPercentage: 100,
     applicationStartDate: '2025-09-06T00:00:00.000Z',
     lastModifiedDate: '2025-09-06T00:00:00.000Z',
     lastModifiedBy: 'rgukt@example.com'
