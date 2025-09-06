@@ -96,17 +96,168 @@ export const departments: Department[] = [
   { id: 'MBA-IB', name: 'MBA - International Business', category: 'MBA' }
 ];
 
+// Mock SAR applications data - initial sample data
+const mockSARApplications: SARApplication[] = [
+  // RGUKT Applications
+  {
+    id: 'institute-info-1-sample',
+    applicationId: 'RGUKT-IS-20240901',
+    institutionId: '1',
+    departmentId: 'institute-info',
+    departmentName: 'Institute Information',
+    status: 'in-progress',
+    completionPercentage: 45,
+    applicationStartDate: '2024-09-01T00:00:00.000Z',
+    lastModifiedDate: '2024-09-05T10:30:00.000Z',
+    lastModifiedBy: 'coordinator@rgukt.ac.in'
+  },
+  {
+    id: '1-CSE-sample',
+    applicationId: 'RGUKT-CSE-20240901',
+    institutionId: '1',
+    departmentId: 'CSE',
+    departmentName: 'Computer Science and Engineering',
+    status: 'in-progress',
+    completionPercentage: 65,
+    applicationStartDate: '2024-09-01T00:00:00.000Z',
+    lastModifiedDate: '2024-09-06T14:20:00.000Z',
+    lastModifiedBy: 'cse.hod@rgukt.ac.in'
+  },
+  {
+    id: '1-ECE-sample',
+    applicationId: 'RGUKT-ECE-20240901',
+    institutionId: '1',
+    departmentId: 'ECE',
+    departmentName: 'Electronics and Communication Engineering',
+    status: 'draft',
+    completionPercentage: 25,
+    applicationStartDate: '2024-09-01T00:00:00.000Z',
+    lastModifiedDate: '2024-09-03T09:15:00.000Z',
+    lastModifiedBy: 'ece.hod@rgukt.ac.in'
+  },
+  {
+    id: '1-MECH-sample',
+    applicationId: 'RGUKT-MECH-20240901',
+    institutionId: '1',
+    departmentId: 'MECH',
+    departmentName: 'Mechanical Engineering',
+    status: 'in-progress',
+    completionPercentage: 80,
+    applicationStartDate: '2024-09-01T00:00:00.000Z',
+    lastModifiedDate: '2024-09-06T16:45:00.000Z',
+    lastModifiedBy: 'mech.hod@rgukt.ac.in'
+  },
+
+  // VIT Applications
+  {
+    id: 'institute-info-2-sample',
+    applicationId: 'VIT-IS-20240902',
+    institutionId: '2',
+    departmentId: 'institute-info',
+    departmentName: 'Institute Information',
+    status: 'completed',
+    completionPercentage: 100,
+    applicationStartDate: '2024-09-02T00:00:00.000Z',
+    lastModifiedDate: '2024-09-05T18:00:00.000Z',
+    lastModifiedBy: 'coordinator@vit.ac.in'
+  },
+  {
+    id: '2-CSE-sample',
+    applicationId: 'VIT-CSE-20240902',
+    institutionId: '2',
+    departmentId: 'CSE',
+    departmentName: 'Computer Science and Engineering',
+    status: 'submitted',
+    completionPercentage: 100,
+    applicationStartDate: '2024-09-02T00:00:00.000Z',
+    lastModifiedDate: '2024-09-06T12:30:00.000Z',
+    lastModifiedBy: 'cse.hod@vit.ac.in'
+  },
+  {
+    id: '2-IT-sample',
+    applicationId: 'VIT-IT-20240902',
+    institutionId: '2',
+    departmentId: 'IT',
+    departmentName: 'Information Technology',
+    status: 'in-progress',
+    completionPercentage: 75,
+    applicationStartDate: '2024-09-02T00:00:00.000Z',
+    lastModifiedDate: '2024-09-06T11:20:00.000Z',
+    lastModifiedBy: 'it.hod@vit.ac.in'
+  },
+
+  // IIT Delhi Applications
+  {
+    id: 'institute-info-3-sample',
+    applicationId: 'IITD-IS-20240903',
+    institutionId: '3',
+    departmentId: 'institute-info',
+    departmentName: 'Institute Information',
+    status: 'in-progress',
+    completionPercentage: 90,
+    applicationStartDate: '2024-09-03T00:00:00.000Z',
+    lastModifiedDate: '2024-09-06T15:45:00.000Z',
+    lastModifiedBy: 'coordinator@iitd.ac.in'
+  },
+  {
+    id: '3-CSE-sample',
+    applicationId: 'IITD-CSE-20240903',
+    institutionId: '3',
+    departmentId: 'CSE',
+    departmentName: 'Computer Science and Engineering',
+    status: 'in-progress',
+    completionPercentage: 55,
+    applicationStartDate: '2024-09-03T00:00:00.000Z',
+    lastModifiedDate: '2024-09-06T13:10:00.000Z',
+    lastModifiedBy: 'cse.hod@iitd.ac.in'
+  },
+  {
+    id: '3-EEE-sample',
+    applicationId: 'IITD-EEE-20240903',
+    institutionId: '3',
+    departmentId: 'EEE',
+    departmentName: 'Electrical and Electronics Engineering',
+    status: 'draft',
+    completionPercentage: 15,
+    applicationStartDate: '2024-09-03T00:00:00.000Z',
+    lastModifiedDate: '2024-09-04T10:30:00.000Z',
+    lastModifiedBy: 'eee.hod@iitd.ac.in'
+  }
+];
+
 // Storage key for SAR applications
 const SAR_APPLICATIONS_KEY = 'compliedu_sar_applications';
+
+// Initialize localStorage with mock data if empty
+const initializeMockData = (): void => {
+  try {
+    const existing = localStorage.getItem(SAR_APPLICATIONS_KEY);
+    if (!existing || JSON.parse(existing).length === 0) {
+      localStorage.setItem(SAR_APPLICATIONS_KEY, JSON.stringify(mockSARApplications));
+      console.log('Initialized mock SAR applications data');
+    }
+  } catch (error) {
+    console.error('Error initializing mock data:', error);
+    localStorage.setItem(SAR_APPLICATIONS_KEY, JSON.stringify(mockSARApplications));
+  }
+};
+
+// Initialize mock data on module load
+initializeMockData();
 
 // Get SAR applications from localStorage
 const getSARApplicationsFromStorage = (): SARApplication[] => {
   try {
     const stored = localStorage.getItem(SAR_APPLICATIONS_KEY);
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) {
+      // If no data in storage, return mock data and save it
+      localStorage.setItem(SAR_APPLICATIONS_KEY, JSON.stringify(mockSARApplications));
+      return mockSARApplications;
+    }
+    return JSON.parse(stored);
   } catch (error) {
     console.error('Error reading SAR applications from storage:', error);
-    return [];
+    return mockSARApplications;
   }
 };
 
