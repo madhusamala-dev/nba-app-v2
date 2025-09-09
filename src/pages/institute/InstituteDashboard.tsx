@@ -6,11 +6,12 @@ import { Progress } from '@/components/ui/progress';
 import InstituteLayout from '@/components/InstituteLayout';
 import { getSARApplicationsByInstitution, getInstitutionById } from '@/lib/data';
 import { useAuth } from '@/lib/auth';
+import type { SARApplication, Institution } from '@/lib/types';
 
 export default function InstituteDashboard() {
   const { user } = useAuth();
-  const [sarApplications, setSarApplications] = useState<any[]>([]);
-  const [institution, setInstitution] = useState<any>(null);
+  const [sarApplications, setSarApplications] = useState<SARApplication[]>([]);
+  const [institution, setInstitution] = useState<Institution | null>(null);
 
   useEffect(() => {
     if (user?.institutionId) {
@@ -19,7 +20,7 @@ export default function InstituteDashboard() {
       // Get institution details
       const inst = getInstitutionById(user.institutionId);
       console.log('Institution found:', inst);
-      setInstitution(inst);
+      setInstitution(inst || null);
       
       // Get SAR applications
       const apps = getSARApplicationsByInstitution(user.institutionId);
@@ -31,7 +32,7 @@ export default function InstituteDashboard() {
           return {
             ...app,
             completionPercentage: 100,
-            status: 'completed'
+            status: 'completed' as const
           };
         }
         return app;

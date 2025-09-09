@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { User } from './types';
 
 // Mock users data
@@ -33,6 +34,48 @@ const users: User[] = [
 
 const CURRENT_USER_KEY = 'compliedu_current_user';
 
+// useAuth Hook - simple implementation that reads from localStorage
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Load user from localStorage on mount
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    setIsLoading(false);
+
+    // Listen for storage changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === CURRENT_USER_KEY) {
+        const newUser = getCurrentUser();
+        setUser(newUser);
+      }
+    };
+
+    // Listen for custom login events
+    const handleLoginEvent = () => {
+      const newUser = getCurrentUser();
+      setUser(newUser);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('userLogin', handleLoginEvent);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userLogin', handleLoginEvent);
+    };
+  }, []);
+
+  return {
+    user,
+    isLoading,
+    isAuthenticated: user !== null
+  };
+}
+
+// Legacy functions for backward compatibility
 export const login = (email: string, password: string): User | null => {
   console.log('=== LOGIN DEBUG ===');
   console.log('Raw inputs:', { email, password });
@@ -61,6 +104,10 @@ export const login = (email: string, password: string): User | null => {
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
     console.log('User saved to localStorage:', user);
     console.log('=== LOGIN SUCCESS ===');
+    
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new CustomEvent('userLogin'));
+    
     return user;
   }
   
@@ -71,6 +118,9 @@ export const login = (email: string, password: string): User | null => {
 export const logout = (): void => {
   localStorage.removeItem(CURRENT_USER_KEY);
   console.log('User logged out');
+  
+  // Dispatch custom event to notify other components
+  window.dispatchEvent(new CustomEvent('userLogout'));
 };
 
 export const getCurrentUser = (): User | null => {
