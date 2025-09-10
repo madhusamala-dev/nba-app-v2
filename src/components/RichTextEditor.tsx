@@ -9,11 +9,15 @@ import { TableCell } from '@tiptap/extension-table-cell';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { Highlight } from '@tiptap/extension-highlight';
+import { TextAlign } from '@tiptap/extension-text-align';
+import { Link } from '@tiptap/extension-link';
+import { Underline } from '@tiptap/extension-underline';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   Bold, 
   Italic, 
-  Underline, 
+  Underline as UnderlineIcon, 
   Strikethrough, 
   List, 
   ListOrdered, 
@@ -21,10 +25,18 @@ import {
   Code, 
   Image as ImageIcon, 
   Table as TableIcon,
-  Palette,
   Highlighter,
+  Link as LinkIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
   Undo,
-  Redo
+  Redo,
+  Type,
+  Heading1,
+  Heading2,
+  Heading3
 } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -41,6 +53,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Underline,
       Image.configure({
         HTMLAttributes: {
           class: 'max-w-full h-auto rounded-lg',
@@ -56,6 +69,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       Color,
       Highlight.configure({
         multicolor: true,
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-600 underline cursor-pointer',
+        },
       }),
     ],
     content,
@@ -84,6 +106,25 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   };
 
+  const addLink = () => {
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('URL', previousUrl);
+
+    // cancelled
+    if (url === null) {
+      return;
+    }
+
+    // empty
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+
+    // update link
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  };
+
   const setColor = (color: string) => {
     editor.chain().focus().setColor(color).run();
   };
@@ -95,7 +136,47 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   return (
     <div className="border rounded-lg overflow-hidden">
       {/* Toolbar */}
-      <div className="border-b bg-gray-50 p-2 flex flex-wrap gap-1">
+      <div className="border-b bg-gray-50 p-3 flex flex-wrap gap-1">
+        {/* Headings */}
+        <div className="flex gap-1 border-r pr-2 mr-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            className={editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''}
+            title="Heading 1"
+          >
+            <Heading1 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            className={editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''}
+            title="Heading 2"
+          >
+            <Heading2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            className={editor.isActive('heading', { level: 3 }) ? 'bg-gray-200' : ''}
+            title="Heading 3"
+          >
+            <Heading3 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().setParagraph().run()}
+            className={editor.isActive('paragraph') ? 'bg-gray-200' : ''}
+            title="Paragraph"
+          >
+            <Type className="w-4 h-4" />
+          </Button>
+        </div>
+
         {/* Text Formatting */}
         <div className="flex gap-1 border-r pr-2 mr-2">
           <Button
@@ -103,6 +184,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             size="sm"
             onClick={() => editor.chain().focus().toggleBold().run()}
             className={editor.isActive('bold') ? 'bg-gray-200' : ''}
+            title="Bold"
           >
             <Bold className="w-4 h-4" />
           </Button>
@@ -111,14 +193,25 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             size="sm"
             onClick={() => editor.chain().focus().toggleItalic().run()}
             className={editor.isActive('italic') ? 'bg-gray-200' : ''}
+            title="Italic"
           >
             <Italic className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            className={editor.isActive('underline') ? 'bg-gray-200' : ''}
+            title="Underline"
+          >
+            <UnderlineIcon className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => editor.chain().focus().toggleStrike().run()}
             className={editor.isActive('strike') ? 'bg-gray-200' : ''}
+            title="Strikethrough"
           >
             <Strikethrough className="w-4 h-4" />
           </Button>
@@ -131,6 +224,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             size="sm"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             className={editor.isActive('bulletList') ? 'bg-gray-200' : ''}
+            title="Bullet List"
           >
             <List className="w-4 h-4" />
           </Button>
@@ -139,8 +233,49 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             size="sm"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             className={editor.isActive('orderedList') ? 'bg-gray-200' : ''}
+            title="Numbered List"
           >
             <ListOrdered className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Alignment */}
+        <div className="flex gap-1 border-r pr-2 mr-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+            className={editor.isActive({ textAlign: 'left' }) ? 'bg-gray-200' : ''}
+            title="Align Left"
+          >
+            <AlignLeft className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+            className={editor.isActive({ textAlign: 'center' }) ? 'bg-gray-200' : ''}
+            title="Align Center"
+          >
+            <AlignCenter className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+            className={editor.isActive({ textAlign: 'right' }) ? 'bg-gray-200' : ''}
+            title="Align Right"
+          >
+            <AlignRight className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+            className={editor.isActive({ textAlign: 'justify' }) ? 'bg-gray-200' : ''}
+            title="Justify"
+          >
+            <AlignJustify className="w-4 h-4" />
           </Button>
         </div>
 
@@ -151,6 +286,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             size="sm"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             className={editor.isActive('blockquote') ? 'bg-gray-200' : ''}
+            title="Quote"
           >
             <Quote className="w-4 h-4" />
           </Button>
@@ -159,12 +295,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             size="sm"
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
             className={editor.isActive('codeBlock') ? 'bg-gray-200' : ''}
+            title="Code Block"
           >
             <Code className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* Colors */}
+        {/* Colors & Highlights */}
         <div className="flex gap-1 border-r pr-2 mr-2">
           <div className="flex gap-1">
             <Button
@@ -173,7 +310,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
               onClick={() => setColor('#000000')}
               title="Black"
             >
-              <div className="w-4 h-4 bg-black rounded"></div>
+              <div className="w-4 h-4 bg-black rounded border"></div>
             </Button>
             <Button
               variant="ghost"
@@ -181,7 +318,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
               onClick={() => setColor('#dc2626')}
               title="Red"
             >
-              <div className="w-4 h-4 bg-red-600 rounded"></div>
+              <div className="w-4 h-4 bg-red-600 rounded border"></div>
             </Button>
             <Button
               variant="ghost"
@@ -189,7 +326,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
               onClick={() => setColor('#2563eb')}
               title="Blue"
             >
-              <div className="w-4 h-4 bg-blue-600 rounded"></div>
+              <div className="w-4 h-4 bg-blue-600 rounded border"></div>
             </Button>
             <Button
               variant="ghost"
@@ -197,7 +334,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
               onClick={() => setColor('#16a34a')}
               title="Green"
             >
-              <div className="w-4 h-4 bg-green-600 rounded"></div>
+              <div className="w-4 h-4 bg-green-600 rounded border"></div>
             </Button>
           </div>
         </div>
@@ -228,10 +365,27 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <div className="w-4 h-4 bg-green-200 rounded border"></div>
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => editor.chain().focus().unsetHighlight().run()}
+            title="Remove Highlight"
+          >
+            <Highlighter className="w-4 h-4" />
+          </Button>
         </div>
 
-        {/* Media & Tables */}
+        {/* Media & Links */}
         <div className="flex gap-1 border-r pr-2 mr-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={addLink}
+            className={editor.isActive('link') ? 'bg-gray-200' : ''}
+            title="Add Link"
+          >
+            <LinkIcon className="w-4 h-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -257,6 +411,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             size="sm"
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
+            title="Undo"
           >
             <Undo className="w-4 h-4" />
           </Button>
@@ -265,6 +420,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             size="sm"
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
+            title="Redo"
           >
             <Redo className="w-4 h-4" />
           </Button>
@@ -274,7 +430,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       {/* Editor Content */}
       <EditorContent 
         editor={editor} 
-        className="min-h-[200px] max-h-[400px] overflow-y-auto"
+        className="min-h-[200px] max-h-[400px] overflow-y-auto prose prose-sm max-w-none"
       />
     </div>
   );

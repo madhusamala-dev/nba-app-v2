@@ -17,7 +17,8 @@ import {
   Clock, 
   AlertCircle,
   X,
-  Plus
+  Plus,
+  Award
 } from 'lucide-react';
 import type { SARApplication, Criteria, SectionData } from '@/lib/types';
 
@@ -37,12 +38,14 @@ const SARCriteriaForm: React.FC<SARCriteriaFormProps> = ({
   const [selectedCriteria, setSelectedCriteria] = useState<Criteria | null>(null);
   const [selectedSection, setSelectedSection] = useState<SectionData | null>(null);
   const [sectionContent, setSectionContent] = useState('');
+  const [sectionMarks, setSectionMarks] = useState<number>(0);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [newAttachment, setNewAttachment] = useState('');
 
   useEffect(() => {
     if (selectedSection) {
       setSectionContent(selectedSection.content);
+      setSectionMarks(selectedSection.obtainedMarks);
       setAttachments(selectedSection.attachments);
     }
   }, [selectedSection]);
@@ -64,6 +67,7 @@ const SARCriteriaForm: React.FC<SARCriteriaFormProps> = ({
     const updatedSection: SectionData = {
       ...selectedSection,
       content: sectionContent,
+      obtainedMarks: sectionMarks,
       attachments: attachments,
       isCompleted: sectionContent.trim().length > 0,
       lastModified: new Date().toISOString()
@@ -76,8 +80,9 @@ const SARCriteriaForm: React.FC<SARCriteriaFormProps> = ({
       )
     };
 
-    // Update completed sections count
+    // Update completed sections count and obtained marks
     updatedCriteria.completedSections = updatedCriteria.sections.filter(s => s.isCompleted).length;
+    updatedCriteria.obtainedMarks = updatedCriteria.sections.reduce((sum, s) => sum + s.obtainedMarks, 0);
 
     const updatedApplication: SARApplication = {
       ...application,
@@ -87,10 +92,11 @@ const SARCriteriaForm: React.FC<SARCriteriaFormProps> = ({
       lastModified: new Date().toISOString()
     };
 
-    // Calculate overall completion percentage
+    // Calculate overall completion percentage and marks
     const totalSections = updatedApplication.criteria.reduce((sum, c) => sum + c.sections.length, 0);
     const completedSections = updatedApplication.criteria.reduce((sum, c) => sum + c.completedSections, 0);
     updatedApplication.completionPercentage = totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0;
+    updatedApplication.overallMarks = updatedApplication.criteria.reduce((sum, c) => sum + c.obtainedMarks, 0);
 
     // Update status based on completion
     if (updatedApplication.completionPercentage === 100) {
@@ -147,8 +153,15 @@ const SARCriteriaForm: React.FC<SARCriteriaFormProps> = ({
                 <div>
                   <h3 className="font-semibold text-blue-900">{application.applicationId}</h3>
                   <p className="text-blue-700 text-sm">Overall Progress: {application.completionPercentage}%</p>
+                  <p className="text-blue-700 text-sm">Total Marks: {application.overallMarks} / {application.maxOverallMarks}</p>
                 </div>
-                <Progress value={application.completionPercentage} className="w-32" />
+                <div className="text-right">
+                  <Progress value={application.completionPercentage} className="w-32 mb-2" />
+                  <Badge variant="outline" className="bg-white">
+                    <Award className="w-3 h-3 mr-1" />
+                    {application.overallMarks}/{application.maxOverallMarks}
+                  </Badge>
+                </div>
               </div>
             </div>
 
@@ -172,9 +185,11 @@ const SARCriteriaForm: React.FC<SARCriteriaFormProps> = ({
                             {criteria.title}
                           </p>
                         </div>
-                        <Badge variant="outline" className="ml-2">
-                          {criteria.maxMarks} marks
-                        </Badge>
+                        <div className="ml-2 text-right">
+                          <Badge variant="outline" className="mb-1">
+                            {criteria.obtainedMarks}/{criteria.maxMarks} marks
+                          </Badge>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -250,7 +265,12 @@ const SARCriteriaForm: React.FC<SARCriteriaFormProps> = ({
                 <span className="text-sm text-gray-600">
                   Progress: {selectedCriteria.completedSections} of {selectedCriteria.sections.length} sections completed
                 </span>
-                <Badge variant="outline">{selectedCriteria.maxMarks} marks total</Badge>
+                <div className="flex gap-2">
+                  <Badge variant="outline">
+                    <Award className="w-3 h-3 mr-1" />
+                    {selectedCriteria.obtainedMarks}/{selectedCriteria.maxMarks} marks
+                  </Badge>
+                </div>
               </div>
               <Progress 
                 value={getCriteriaProgress(selectedCriteria)} 
@@ -275,7 +295,7 @@ const SARCriteriaForm: React.FC<SARCriteriaFormProps> = ({
                             Section {section.sectionNumber}: {section.title}
                           </h4>
                           <p className="text-sm text-gray-600">
-                            Max Marks: {section.maxMarks}
+                            Marks: {section.obtainedMarks}/{section.maxMarks}
                           </p>
                         </div>
                       </div>
@@ -331,7 +351,23 @@ const SARCriteriaForm: React.FC<SARCriteriaFormProps> = ({
                   <h4 className="font-medium">Section {selectedSection.sectionNumber}</h4>
                   <p className="text-gray-600">{selectedSection.title}</p>
                 </div>
-                <Badge variant="outline">{selectedSection.maxMarks} marks</Badge>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <Label htmlFor="section-marks" className="text-sm font-medium">Obtained Marks</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        id="section-marks"
+                        type="number"
+                        min="0"
+                        max={selectedSection.maxMarks}
+                        value={sectionMarks}
+                        onChange={(e) => setSectionMarks(Number(e.target.value))}
+                        className="w-20 text-center"
+                      />
+                      <span className="text-sm text-gray-500">/ {selectedSection.maxMarks}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

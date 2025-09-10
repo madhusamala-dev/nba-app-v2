@@ -9,21 +9,59 @@ export interface User {
 export interface Institution {
   id: string;
   name: string;
+  aisheCode?: string;
+  institutionCode: string;
+  tierCategory?: string;
+  institutionCategory: string;
+  email?: string;
+  password?: string;
+  nbaCoordinator?: {
+    name: string;
+    designation: string;
+    email: string;
+    contactNumber: string;
+  };
+  chairman?: {
+    name: string;
+    designation: string;
+    email: string;
+    contactNumber: string;
+  };
   address: string;
-  contactEmail: string;
-  contactPhone: string;
+  registeredDate?: string;
+  status?: string;
+  completionPercentage?: number;
+  lastUpdated?: string;
   establishedYear: number;
-  accreditationStatus: 'pending' | 'accredited' | 'not-accredited';
-  createdAt: string;
+  coordinatorName: string;
+  coordinatorEmail: string;
+  coordinatorPhone: string;
+  preQualifiersCompleted?: boolean;
+}
+
+export interface Application {
+  id: string;
+  institutionId?: string;
+  applicationId?: string;
+  title?: string;
+  type?: string;
+  programs?: string[];
+  sars?: string[];
+  createdDate: string;
+  status: string;
+  progress?: number;
+  dueDate?: string;
+  lastModified?: string;
 }
 
 export interface SectionData {
   id: string;
   sectionNumber: string;
   title: string;
+  content: string;
   maxMarks: number;
-  content: string; // Rich text content
-  attachments: string[]; // File paths/URLs
+  obtainedMarks: number; // User can input their own marks
+  attachments: string[];
   isCompleted: boolean;
   lastModified: string;
 }
@@ -34,36 +72,28 @@ export interface Criteria {
   title: string;
   description: string;
   maxMarks: number;
+  obtainedMarks: number; // Sum of all section marks
   sections: SectionData[];
   completedSections: number;
-  totalMarks: number;
-  obtainedMarks: number;
 }
 
 export interface SARApplication {
   id: string;
-  applicationId: string;
   institutionId: string;
+  applicationId: string;
   departmentName: string;
   applicationStartDate: string;
   applicationEndDate: string;
-  status: 'draft' | 'in-progress' | 'completed' | 'submitted' | 'under-review' | 'approved' | 'rejected';
+  status: 'draft' | 'in-progress' | 'completed' | 'submitted';
   completionPercentage: number;
   criteria: Criteria[];
   overallMarks: number;
   maxOverallMarks: number;
   lastModified: string;
-  submittedAt?: string;
-  reviewedAt?: string;
-  approvedAt?: string;
 }
 
-export interface Application {
+export interface Department {
   id: string;
-  institutionId: string;
-  type: 'initial' | 'renewal';
-  status: 'draft' | 'submitted' | 'under-review' | 'approved' | 'rejected';
-  submittedAt?: string;
-  reviewedAt?: string;
-  approvedAt?: string;
+  name: string;
+  category: string;
 }
