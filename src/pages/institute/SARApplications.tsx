@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,91 +6,82 @@ import { Label } from '@/components/ui/label';
 import { Calendar, User, ExternalLink, Plus, X, CheckCircle } from 'lucide-react';
 import InstituteLayout from '@/components/InstituteLayout';
 import InstituteInformationForm from './InstituteInformationForm';
-
-interface SARApplication {
-  applicationId: string;
-  department: string;
-  status: string;
-  progress: number;
-  startDate: string;
-  lastModified: string;
-  modifiedBy: string;
-}
+import SARCriteriaForm from '@/components/SARCriteriaForm';
+import { useAuth } from '@/lib/auth';
+import { getSARApplicationsByInstitution, updateSARApplication } from '@/lib/data';
+import type { SARApplication } from '@/lib/types';
 
 export default function SARApplications() {
+  const { user } = useAuth();
   const [selectedApplicationId, setSelectedApplicationId] = useState<string>('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isCriteriaFormOpen, setIsCriteriaFormOpen] = useState(false);
   const [showDepartmentSelection, setShowDepartmentSelection] = useState(false);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [sarApplications, setSarApplications] = useState<SARApplication[]>([]);
+  const [selectedApplication, setSelectedApplication] = useState<SARApplication | null>(null);
 
-  // Institute Information data with state for progress tracking
-  const [instituteInfo, setInstituteInfo] = useState({
-    applicationId: 'RGUKT-IS-20250905',
-    department: 'Institute Information',
-    status: 'Completed',
-    progress: 100,
-    startDate: '6 Sept 2025',
-    lastModified: '6 Sept 2025',
-    modifiedBy: 'rgukt@example.com'
-  });
-
-  // Department SAR Applications data - now using state to allow adding new applications
-  const [departmentApplications, setDepartmentApplications] = useState<SARApplication[]>([
-    {
-      applicationId: 'RGUKT-CSE-20250905',
-      department: 'Computer Science and Engineering',
-      status: 'Draft',
-      progress: 0,
-      startDate: '6 Sept 2025',
-      lastModified: '6 Sept 2025',
-      modifiedBy: 'rgukt@example.com'
-    },
-    {
-      applicationId: 'RGUKT-ECE-20250905',
-      department: 'Electronics and Communication Engineering',
-      status: 'Draft',
-      progress: 0,
-      startDate: '6 Sept 2025',
-      lastModified: '6 Sept 2025',
-      modifiedBy: 'rgukt@example.com'
+  // Load SAR applications
+  useEffect(() => {
+    if (user?.institutionId) {
+      const apps = getSARApplicationsByInstitution(user.institutionId);
+      setSarApplications(apps);
     }
-  ]);
+  }, [user]);
 
   const handleProgressUpdate = (applicationId: string, progress: number) => {
-    // Update institute info progress
-    if (applicationId === instituteInfo.applicationId) {
-      const newStatus = progress === 100 ? 'Completed' : progress > 0 ? 'In Progress' : 'Draft';
-      setInstituteInfo(prev => ({
-        ...prev,
-        progress,
-        status: newStatus,
-        lastModified: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-      }));
-    } else {
-      // Update department application progress
-      setDepartmentApplications(prev => 
-        prev.map(app => 
-          app.applicationId === applicationId 
-            ? { 
-                ...app, 
-                progress,
-                status: progress === 100 ? 'Completed' : progress > 0 ? 'In Progress' : 'Draft',
-                lastModified: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-              }
-            : app
-        )
-      );
-    }
+    setSarApplications(prev => 
+      prev.map(app => 
+        app.id === applicationId 
+          ? { 
+              ...app, 
+              completionPercentage: progress,
+              status: progress === 100 ? 'completed' : progress > 0 ? 'in-progress' : 'draft',
+              lastModified: new Date().toISOString()
+            }
+          : app
+      )
+    );
   };
 
-  const handleFillForm = (applicationId: string) => {
-    setSelectedApplicationId(applicationId);
-    setIsFormOpen(true);
+  const handleFillForm = (application: SARApplication) => {
+    if (application.departmentName === 'Institute Information') {
+      setSelectedApplicationId(application.id);
+      setIsFormOpen(true);
+    } else {
+      // For department SAR applications, open criteria form
+      setSelectedApplication(application);
+      setIsCriteriaFormOpen(true);
+    }
   };
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setSelectedApplicationId('');
+  };
+
+  const handleCloseCriteriaForm = () => {
+    setIsCriteriaFormOpen(false);
+    setSelectedApplication(null);
+  };
+
+  const handleUpdateApplication = (applicationId: string, updates: Partial<SARApplication>) => {
+    // Update local state
+    setSarApplications(prev => 
+      prev.map(app => 
+        app.id === applicationId 
+          ? { ...app, ...updates }
+          : app
+      )
+    );
+
+    // Update in data store
+    updateSARApplication(applicationId, updates);
+    
+    // Update selected application if it's the one being edited
+    if (selectedApplication?.id === applicationId) {
+      setSelectedApplication(prev => prev ? { ...prev, ...updates } : null);
+    }
   };
 
   const handleStartNewApplication = () => {
@@ -126,18 +117,23 @@ export default function SARApplications() {
       const newApplicationId = `RGUKT-${deptCode}-${dateString}`;
 
       return {
+        id: `${Date.now()}-${deptCode}`,
         applicationId: newApplicationId,
-        department: department?.name || '',
-        status: 'Draft',
-        progress: 0,
-        startDate: formattedDate,
-        lastModified: formattedDate,
-        modifiedBy: 'rgukt@example.com'
+        institutionId: user?.institutionId || '1',
+        departmentName: department?.name || '',
+        applicationStartDate: currentDate.toISOString(),
+        applicationEndDate: new Date(currentDate.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'draft',
+        completionPercentage: 0,
+        criteria: [], // Will be populated when form is opened
+        overallMarks: 0,
+        maxOverallMarks: 700,
+        lastModified: currentDate.toISOString()
       };
     });
 
     // Add all new applications to the list
-    setDepartmentApplications(prev => [...prev, ...newApplications]);
+    setSarApplications(prev => [...prev, ...newApplications]);
     
     // Close department selection and reset
     setShowDepartmentSelection(false);
@@ -162,8 +158,9 @@ export default function SARApplications() {
   ];
 
   // Filter out departments that already have applications
+  const departmentApplications = sarApplications.filter(app => app.departmentName !== 'Institute Information');
   const availableDepartments = departments.filter(dept => 
-    !departmentApplications.some(app => app.department === dept.name)
+    !departmentApplications.some(app => app.departmentName === dept.name)
   );
 
   // Function to get progress bar color based on progress percentage
@@ -181,7 +178,7 @@ export default function SARApplications() {
     switch (status.toLowerCase()) {
       case 'completed':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'in progress':
+      case 'in-progress':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'draft':
         return 'bg-gray-100 text-gray-700 border-gray-200';
@@ -189,6 +186,9 @@ export default function SARApplications() {
         return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
+
+  // Separate institute information and department applications
+  const instituteInfoApp = sarApplications.find(app => app.departmentName === 'Institute Information');
 
   if (showDepartmentSelection) {
     return (
@@ -307,81 +307,91 @@ export default function SARApplications() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">SAR Applications</h1>
           <p className="text-gray-600 mt-2">
-            Manage your Self Assessment Report applications for RGUKT Basar
+            Manage your Self Assessment Report applications for NBA accreditation
           </p>
         </div>
 
         {/* Institute Information Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 border-2 border-gray-400 rounded flex items-center justify-center">
-              <span className="text-sm font-medium">📋</span>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900">Institute Information</h2>
-          </div>
-
-          <div className="bg-white border rounded-lg overflow-hidden">
-            {/* Table Header */}
-            <div className="grid grid-cols-8 gap-4 px-6 py-3 bg-gray-50 border-b text-sm font-medium text-gray-700">
-              <div>Application ID</div>
-              <div>Department</div>
-              <div>Status</div>
-              <div>Progress</div>
-              <div>Start Date</div>
-              <div>Last Modified</div>
-              <div>Modified By</div>
-              <div>Actions</div>
+        {instituteInfoApp && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 border-2 border-gray-400 rounded flex items-center justify-center">
+                <span className="text-sm font-medium">📋</span>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900">Institute Information</h2>
             </div>
 
-            {/* Table Row */}
-            <div className="grid grid-cols-8 gap-4 px-6 py-4 items-center border-b last:border-b-0">
-              <div className="text-sm font-medium text-gray-900">
-                {instituteInfo.applicationId}
+            <div className="bg-white border rounded-lg overflow-hidden">
+              {/* Table Header */}
+              <div className="grid grid-cols-8 gap-4 px-6 py-3 bg-gray-50 border-b text-sm font-medium text-gray-700">
+                <div>Application ID</div>
+                <div>Department</div>
+                <div>Status</div>
+                <div>Progress</div>
+                <div>Start Date</div>
+                <div>Last Modified</div>
+                <div>Modified By</div>
+                <div>Actions</div>
               </div>
-              <div className="text-sm text-gray-600">
-                {instituteInfo.department}
-              </div>
-              <div>
-                <Badge variant="outline" className={getStatusBadgeColor(instituteInfo.status)}>
-                  {instituteInfo.status}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-16 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(instituteInfo.progress)}`}
-                    style={{ width: `${instituteInfo.progress}%` }}
-                  ></div>
+
+              {/* Table Row */}
+              <div className="grid grid-cols-8 gap-4 px-6 py-4 items-center border-b last:border-b-0">
+                <div className="text-sm font-medium text-gray-900">
+                  {instituteInfoApp.applicationId}
                 </div>
-                <span className="text-sm text-gray-600 font-medium">{instituteInfo.progress}%</span>
-              </div>
-              <div className="flex items-center gap-1 text-sm text-gray-600">
-                <Calendar className="w-4 h-4" />
-                {instituteInfo.startDate}
-              </div>
-              <div className="flex items-center gap-1 text-sm text-gray-600">
-                <Calendar className="w-4 h-4" />
-                {instituteInfo.lastModified}
-              </div>
-              <div className="flex items-center gap-1 text-sm text-gray-600">
-                <User className="w-4 h-4" />
-                {instituteInfo.modifiedBy}
-              </div>
-              <div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleFillForm(instituteInfo.applicationId)}
-                  className="flex items-center gap-1"
-                  disabled={instituteInfo.progress === 100}
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  {instituteInfo.progress === 100 ? 'View' : 'Fill'}
-                </Button>
+                <div className="text-sm text-gray-600">
+                  {instituteInfoApp.departmentName}
+                </div>
+                <div>
+                  <Badge variant="outline" className={getStatusBadgeColor(instituteInfoApp.status)}>
+                    {instituteInfoApp.status === 'completed' ? 'Completed' : 
+                     instituteInfoApp.status === 'in-progress' ? 'In Progress' : 'Draft'}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(instituteInfoApp.completionPercentage)}`}
+                      style={{ width: `${instituteInfoApp.completionPercentage}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-sm text-gray-600 font-medium">{instituteInfoApp.completionPercentage}%</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  {new Date(instituteInfoApp.applicationStartDate).toLocaleDateString('en-GB', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    year: 'numeric' 
+                  })}
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  {new Date(instituteInfoApp.lastModified).toLocaleDateString('en-GB', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    year: 'numeric' 
+                  })}
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <User className="w-4 h-4" />
+                  {user?.email || 'Unknown'}
+                </div>
+                <div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleFillForm(instituteInfoApp)}
+                    className="flex items-center gap-1"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    {instituteInfoApp.completionPercentage === 100 ? 'View' : 'Fill'}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Department SAR Applications Section */}
         <div className="space-y-4">
@@ -410,54 +420,76 @@ export default function SARApplications() {
             </div>
 
             {/* Table Rows */}
-            {departmentApplications.map((application) => (
-              <div key={application.applicationId} className="grid grid-cols-8 gap-4 px-6 py-4 items-center border-b last:border-b-0">
-                <div className="text-sm font-medium text-gray-900">
-                  {application.applicationId}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {application.department}
-                </div>
-                <div>
-                  <Badge variant="outline" className={getStatusBadgeColor(application.status)}>
-                    {application.status}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-16 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(application.progress)}`}
-                      style={{ width: `${application.progress}%` }}
-                    ></div>
+            {departmentApplications.length > 0 ? (
+              departmentApplications.map((application) => (
+                <div key={application.id} className="grid grid-cols-8 gap-4 px-6 py-4 items-center border-b last:border-b-0">
+                  <div className="text-sm font-medium text-gray-900">
+                    {application.applicationId}
                   </div>
-                  <span className="text-sm text-gray-600 font-medium">{application.progress}%</span>
+                  <div className="text-sm text-gray-600">
+                    {application.departmentName}
+                  </div>
+                  <div>
+                    <Badge variant="outline" className={getStatusBadgeColor(application.status)}>
+                      {application.status === 'completed' ? 'Completed' : 
+                       application.status === 'in-progress' ? 'In Progress' : 'Draft'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(application.completionPercentage)}`}
+                        style={{ width: `${application.completionPercentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm text-gray-600 font-medium">{application.completionPercentage}%</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    {new Date(application.applicationStartDate).toLocaleDateString('en-GB', { 
+                      day: 'numeric', 
+                      month: 'short', 
+                      year: 'numeric' 
+                    })}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    {new Date(application.lastModified).toLocaleDateString('en-GB', { 
+                      day: 'numeric', 
+                      month: 'short', 
+                      year: 'numeric' 
+                    })}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <User className="w-4 h-4" />
+                    {user?.email || 'Unknown'}
+                  </div>
+                  <div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleFillForm(application)}
+                      className="flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      {application.completionPercentage === 100 ? 'View' : 'Fill'}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <Calendar className="w-4 h-4" />
-                  {application.startDate}
-                </div>
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <Calendar className="w-4 h-4" />
-                  {application.lastModified}
-                </div>
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <User className="w-4 h-4" />
-                  {application.modifiedBy}
-                </div>
-                <div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleFillForm(application.applicationId)}
-                    className="flex items-center gap-1"
-                    disabled={application.progress === 100}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    {application.progress === 100 ? 'View' : 'Fill'}
-                  </Button>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📋</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Department Applications</h3>
+                <p className="text-gray-600 mb-4">
+                  Create SAR applications for your departments to get started.
+                </p>
+                <Button onClick={handleStartNewApplication}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Application
+                </Button>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -468,6 +500,14 @@ export default function SARApplications() {
         onClose={handleCloseForm}
         applicationId={selectedApplicationId}
         onProgressUpdate={handleProgressUpdate}
+      />
+
+      {/* SAR Criteria Form */}
+      <SARCriteriaForm
+        isOpen={isCriteriaFormOpen}
+        onClose={handleCloseCriteriaForm}
+        application={selectedApplication}
+        onUpdate={handleUpdateApplication}
       />
     </InstituteLayout>
   );

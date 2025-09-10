@@ -9,65 +9,61 @@ export interface User {
 export interface Institution {
   id: string;
   name: string;
-  aisheCode?: string;
-  institutionCode: string;
-  tierCategory?: string;
-  institutionCategory: string;
-  email?: string;
-  password?: string;
-  nbaCoordinator?: {
-    name: string;
-    designation: string;
-    email: string;
-    contactNumber: string;
-  };
-  chairman?: {
-    name: string;
-    designation: string;
-    email: string;
-    contactNumber: string;
-  };
   address: string;
-  registeredDate?: string;
-  status?: string;
-  completionPercentage?: number;
-  lastUpdated?: string;
+  contactEmail: string;
+  contactPhone: string;
   establishedYear: number;
-  coordinatorName: string;
-  coordinatorEmail: string;
-  coordinatorPhone: string;
+  accreditationStatus: 'pending' | 'accredited' | 'not-accredited';
+  createdAt: string;
 }
 
-export interface Application {
+export interface SectionData {
   id: string;
-  institutionId?: string;
-  applicationId?: string;
-  title?: string;
-  type?: string;
-  programs?: string[];
-  sars?: string[];
-  createdDate: string;
-  status: string;
-  progress?: number;
-  dueDate?: string;
-  lastModified?: string;
+  sectionNumber: string;
+  title: string;
+  maxMarks: number;
+  content: string; // Rich text content
+  attachments: string[]; // File paths/URLs
+  isCompleted: boolean;
+  lastModified: string;
+}
+
+export interface Criteria {
+  id: string;
+  criteriaNumber: number;
+  title: string;
+  description: string;
+  maxMarks: number;
+  sections: SectionData[];
+  completedSections: number;
+  totalMarks: number;
+  obtainedMarks: number;
 }
 
 export interface SARApplication {
   id: string;
-  institutionId: string;
   applicationId: string;
-  departmentId: string;
+  institutionId: string;
   departmentName: string;
   applicationStartDate: string;
-  lastModifiedDate: string;
-  lastModifiedBy: string;
-  status: 'draft' | 'in-progress' | 'completed' | 'submitted';
+  applicationEndDate: string;
+  status: 'draft' | 'in-progress' | 'completed' | 'submitted' | 'under-review' | 'approved' | 'rejected';
   completionPercentage: number;
+  criteria: Criteria[];
+  overallMarks: number;
+  maxOverallMarks: number;
+  lastModified: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  approvedAt?: string;
 }
 
-export interface Department {
+export interface Application {
   id: string;
-  name: string;
-  category: string;
+  institutionId: string;
+  type: 'initial' | 'renewal';
+  status: 'draft' | 'submitted' | 'under-review' | 'approved' | 'rejected';
+  submittedAt?: string;
+  reviewedAt?: string;
+  approvedAt?: string;
 }

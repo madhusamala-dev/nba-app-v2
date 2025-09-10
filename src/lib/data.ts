@@ -1,420 +1,510 @@
-import { Institution, User, SARApplication, Department, Application } from './types';
+import { Institution, SARApplication, Application, Criteria, SectionData } from './types';
 
-// Mock data for institutions - complete structure with all required fields
+// Mock institutions data
 export const institutions: Institution[] = [
   {
     id: '1',
     name: 'RGUKT Basar',
-    aisheCode: 'U-0001',
-    institutionCode: 'RGUKT',
-    tierCategory: 'Tier I',
-    institutionCategory: 'Engineering',
-    email: 'rgukt@example.com',
-    address: 'Basar, Telangana',
-    registeredDate: '2024-01-15T00:00:00.000Z',
-    status: 'registered',
+    address: 'Basar, Nirmal District, Telangana',
+    contactEmail: 'admin@rguktbasar.ac.in',
+    contactPhone: '+91-8734-123456',
     establishedYear: 2008,
-    coordinatorName: 'Dr. Rajesh Kumar',
-    coordinatorEmail: 'coordinator@rgukt.ac.in',
-    coordinatorPhone: '+91-9876543210',
-    preQualifiersCompleted: true,
-    nbaCoordinator: {
-      name: 'Dr. Rajesh Kumar',
-      contactNumber: '+91-9876543210',
-      email: 'coordinator@rgukt.ac.in',
-      designation: 'Professor'
-    }
+    accreditationStatus: 'pending',
+    createdAt: '2024-01-15T10:30:00Z'
   },
   {
     id: '2',
     name: 'VIT University',
-    aisheCode: 'U-0002',
-    institutionCode: 'VIT',
-    tierCategory: 'Tier I',
-    institutionCategory: 'Engineering',
-    email: 'vit@example.com',
     address: 'Vellore, Tamil Nadu',
-    registeredDate: '2024-01-10T00:00:00.000Z',
-    status: 'registered',
+    contactEmail: 'admin@vit.ac.in',
+    contactPhone: '+91-416-220-2020',
     establishedYear: 1984,
-    coordinatorName: 'Dr. Priya Sharma',
-    coordinatorEmail: 'coordinator@vit.ac.in',
-    coordinatorPhone: '+91-9876543211',
-    preQualifiersCompleted: true,
-    nbaCoordinator: {
-      name: 'Dr. Priya Sharma',
-      contactNumber: '+91-9876543211',
-      email: 'coordinator@vit.ac.in',
-      designation: 'Professor'
-    }
+    accreditationStatus: 'accredited',
+    createdAt: '2024-01-20T14:15:00Z'
   },
   {
     id: '3',
-    name: 'IIT Delhi',
-    aisheCode: 'U-0003',
-    institutionCode: 'IITD',
-    tierCategory: 'Tier I',
-    institutionCategory: 'Engineering',
-    email: 'iit@example.com',
-    address: 'New Delhi',
-    registeredDate: '2024-01-05T00:00:00.000Z',
-    status: 'registered',
-    establishedYear: 1961,
-    coordinatorName: 'Dr. Amit Singh',
-    coordinatorEmail: 'coordinator@iitd.ac.in',
-    coordinatorPhone: '+91-9876543212',
-    preQualifiersCompleted: true,
-    nbaCoordinator: {
-      name: 'Dr. Amit Singh',
-      contactNumber: '+91-9876543212',
-      email: 'coordinator@iitd.ac.in',
-      designation: 'Professor'
-    }
+    name: 'IIT Hyderabad',
+    address: 'Kandi, Sangareddy, Telangana',
+    contactEmail: 'admin@iith.ac.in',
+    contactPhone: '+91-40-2301-6000',
+    establishedYear: 2008,
+    accreditationStatus: 'accredited',
+    createdAt: '2024-02-01T09:00:00Z'
   }
 ];
 
-// Mock departments data
-export const departments: Department[] = [
-  // Engineering Departments
-  { id: 'CSE', name: 'Computer Science and Engineering', category: 'Engineering' },
-  { id: 'ECE', name: 'Electronics and Communication Engineering', category: 'Engineering' },
-  { id: 'EEE', name: 'Electrical and Electronics Engineering', category: 'Engineering' },
-  { id: 'MECH', name: 'Mechanical Engineering', category: 'Engineering' },
-  { id: 'CIVIL', name: 'Civil Engineering', category: 'Engineering' },
-  { id: 'CHEM', name: 'Chemical Engineering', category: 'Engineering' },
-  { id: 'AERO', name: 'Aeronautical Engineering', category: 'Engineering' },
-  { id: 'AUTO', name: 'Automobile Engineering', category: 'Engineering' },
-  { id: 'BIOTECH', name: 'Biotechnology', category: 'Engineering' },
-  { id: 'IT', name: 'Information Technology', category: 'Engineering' },
-  
-  // MBA Departments
-  { id: 'MBA-FIN', name: 'MBA - Finance', category: 'MBA' },
-  { id: 'MBA-MKT', name: 'MBA - Marketing', category: 'MBA' },
-  { id: 'MBA-HR', name: 'MBA - Human Resources', category: 'MBA' },
-  { id: 'MBA-OPS', name: 'MBA - Operations', category: 'MBA' },
-  { id: 'MBA-IT', name: 'MBA - Information Technology', category: 'MBA' },
-  { id: 'MBA-IB', name: 'MBA - International Business', category: 'MBA' }
+// NBA Criteria Template
+const createCriteriaTemplate = (): Criteria[] => [
+  {
+    id: 'criteria-1',
+    criteriaNumber: 1,
+    title: 'Vision, Mission and Program Educational Objectives',
+    description: 'Assessment of institutional vision, mission, and program educational objectives',
+    maxMarks: 100,
+    sections: [
+      {
+        id: 'section-1-1',
+        sectionNumber: '1.1',
+        title: 'Vision and Mission of the Institution',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-1-2',
+        sectionNumber: '1.2',
+        title: 'Vision and Mission of the Department',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-1-3',
+        sectionNumber: '1.3',
+        title: 'Program Educational Objectives (PEOs)',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-1-4',
+        sectionNumber: '1.4',
+        title: 'Assessment of PEOs',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      }
+    ],
+    completedSections: 0,
+    totalMarks: 100,
+    obtainedMarks: 0
+  },
+  {
+    id: 'criteria-2',
+    criteriaNumber: 2,
+    title: 'Program Outcomes and Assessment',
+    description: 'Assessment of program outcomes and their evaluation methods',
+    maxMarks: 100,
+    sections: [
+      {
+        id: 'section-2-1',
+        sectionNumber: '2.1',
+        title: 'Program Outcomes (POs)',
+        maxMarks: 30,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-2-2',
+        sectionNumber: '2.2',
+        title: 'Program Specific Outcomes (PSOs)',
+        maxMarks: 30,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-2-3',
+        sectionNumber: '2.3',
+        title: 'Assessment of Program Outcomes',
+        maxMarks: 40,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      }
+    ],
+    completedSections: 0,
+    totalMarks: 100,
+    obtainedMarks: 0
+  },
+  {
+    id: 'criteria-3',
+    criteriaNumber: 3,
+    title: 'Curriculum Design and Development',
+    description: 'Assessment of curriculum design, development and implementation',
+    maxMarks: 100,
+    sections: [
+      {
+        id: 'section-3-1',
+        sectionNumber: '3.1',
+        title: 'Curriculum Design Process',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-3-2',
+        sectionNumber: '3.2',
+        title: 'Course Structure and Syllabus',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-3-3',
+        sectionNumber: '3.3',
+        title: 'Curriculum Implementation',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-3-4',
+        sectionNumber: '3.4',
+        title: 'Curriculum Review and Update',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      }
+    ],
+    completedSections: 0,
+    totalMarks: 100,
+    obtainedMarks: 0
+  },
+  {
+    id: 'criteria-4',
+    criteriaNumber: 4,
+    title: 'Students Performance and Assessment',
+    description: 'Assessment of student performance evaluation methods and outcomes',
+    maxMarks: 100,
+    sections: [
+      {
+        id: 'section-4-1',
+        sectionNumber: '4.1',
+        title: 'Student Admission Process',
+        maxMarks: 20,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-4-2',
+        sectionNumber: '4.2',
+        title: 'Assessment Methods',
+        maxMarks: 30,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-4-3',
+        sectionNumber: '4.3',
+        title: 'Student Performance Analysis',
+        maxMarks: 30,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-4-4',
+        sectionNumber: '4.4',
+        title: 'Student Support Services',
+        maxMarks: 20,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      }
+    ],
+    completedSections: 0,
+    totalMarks: 100,
+    obtainedMarks: 0
+  },
+  {
+    id: 'criteria-5',
+    criteriaNumber: 5,
+    title: 'Faculty Information and Contributions',
+    description: 'Assessment of faculty qualifications, contributions and development',
+    maxMarks: 100,
+    sections: [
+      {
+        id: 'section-5-1',
+        sectionNumber: '5.1',
+        title: 'Faculty Profile and Qualifications',
+        maxMarks: 30,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-5-2',
+        sectionNumber: '5.2',
+        title: 'Faculty Development Programs',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-5-3',
+        sectionNumber: '5.3',
+        title: 'Research and Publications',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-5-4',
+        sectionNumber: '5.4',
+        title: 'Industry Interaction',
+        maxMarks: 20,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      }
+    ],
+    completedSections: 0,
+    totalMarks: 100,
+    obtainedMarks: 0
+  },
+  {
+    id: 'criteria-6',
+    criteriaNumber: 6,
+    title: 'Facilities and Technical Support',
+    description: 'Assessment of infrastructure, facilities and technical support',
+    maxMarks: 100,
+    sections: [
+      {
+        id: 'section-6-1',
+        sectionNumber: '6.1',
+        title: 'Infrastructure and Facilities',
+        maxMarks: 30,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-6-2',
+        sectionNumber: '6.2',
+        title: 'Laboratory Facilities',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-6-3',
+        sectionNumber: '6.3',
+        title: 'Library and Information Resources',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-6-4',
+        sectionNumber: '6.4',
+        title: 'Computing and IT Support',
+        maxMarks: 20,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      }
+    ],
+    completedSections: 0,
+    totalMarks: 100,
+    obtainedMarks: 0
+  },
+  {
+    id: 'criteria-7',
+    criteriaNumber: 7,
+    title: 'Continuous Improvement',
+    description: 'Assessment of continuous improvement processes and outcomes',
+    maxMarks: 100,
+    sections: [
+      {
+        id: 'section-7-1',
+        sectionNumber: '7.1',
+        title: 'Quality Assurance System',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-7-2',
+        sectionNumber: '7.2',
+        title: 'Feedback Mechanism',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-7-3',
+        sectionNumber: '7.3',
+        title: 'Action Taken Reports',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      },
+      {
+        id: 'section-7-4',
+        sectionNumber: '7.4',
+        title: 'Best Practices and Innovations',
+        maxMarks: 25,
+        content: '',
+        attachments: [],
+        isCompleted: false,
+        lastModified: new Date().toISOString()
+      }
+    ],
+    completedSections: 0,
+    totalMarks: 100,
+    obtainedMarks: 0
+  }
 ];
 
-// Mock SAR applications data - matching exactly what's shown in SAR Applications page
-const mockSARApplications: SARApplication[] = [
-  // RGUKT Applications - matching the SAR Applications page data exactly
+// Mock SAR applications data with enhanced structure
+export const sarApplications: SARApplication[] = [
   {
-    id: 'institute-info-1',
-    applicationId: 'RGUKT-IS-20250905',
+    id: 'sar-1',
+    applicationId: 'SAR-RGUKT-INST-2024-001',
     institutionId: '1',
-    departmentId: 'institute-info',
     departmentName: 'Institute Information',
+    applicationStartDate: '2024-01-15T00:00:00Z',
+    applicationEndDate: '2024-04-15T23:59:59Z',
     status: 'completed',
     completionPercentage: 100,
-    applicationStartDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedBy: 'rgukt@example.com'
+    criteria: [], // Institute Information doesn't use criteria structure
+    overallMarks: 0,
+    maxOverallMarks: 0,
+    lastModified: '2024-03-10T15:30:00Z'
   },
   {
-    id: '1-CSE',
-    applicationId: 'RGUKT-CSE-20250905',
+    id: 'sar-2',
+    applicationId: 'SAR-RGUKT-CSE-2024-001',
     institutionId: '1',
-    departmentId: 'CSE',
     departmentName: 'Computer Science and Engineering',
-    status: 'draft',
-    completionPercentage: 0,
-    applicationStartDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedBy: 'rgukt@example.com'
+    applicationStartDate: '2024-01-15T00:00:00Z',
+    applicationEndDate: '2024-04-15T23:59:59Z',
+    status: 'in-progress',
+    completionPercentage: 15,
+    criteria: createCriteriaTemplate(),
+    overallMarks: 0,
+    maxOverallMarks: 700,
+    lastModified: '2024-03-10T10:15:00Z'
   },
   {
-    id: '1-ECE',
-    applicationId: 'RGUKT-ECE-20250905',
+    id: 'sar-3',
+    applicationId: 'SAR-RGUKT-ECE-2024-001',
     institutionId: '1',
-    departmentId: 'ECE',
     departmentName: 'Electronics and Communication Engineering',
+    applicationStartDate: '2024-01-15T00:00:00Z',
+    applicationEndDate: '2024-04-15T23:59:59Z',
     status: 'draft',
     completionPercentage: 0,
-    applicationStartDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedBy: 'rgukt@example.com'
-  },
-
-  // VIT Applications - sample data
-  {
-    id: 'institute-info-2',
-    applicationId: 'VIT-IS-20250905',
-    institutionId: '2',
-    departmentId: 'institute-info',
-    departmentName: 'Institute Information',
-    status: 'draft',
-    completionPercentage: 0,
-    applicationStartDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedBy: 'vit@example.com'
-  },
-  {
-    id: '2-CSE',
-    applicationId: 'VIT-CSE-20250905',
-    institutionId: '2',
-    departmentId: 'CSE',
-    departmentName: 'Computer Science and Engineering',
-    status: 'draft',
-    completionPercentage: 0,
-    applicationStartDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedBy: 'vit@example.com'
-  },
-
-  // IIT Delhi Applications - sample data
-  {
-    id: 'institute-info-3',
-    applicationId: 'IITD-IS-20250905',
-    institutionId: '3',
-    departmentId: 'institute-info',
-    departmentName: 'Institute Information',
-    status: 'draft',
-    completionPercentage: 0,
-    applicationStartDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedBy: 'iit@example.com'
-  },
-  {
-    id: '3-CSE',
-    applicationId: 'IITD-CSE-20250905',
-    institutionId: '3',
-    departmentId: 'CSE',
-    departmentName: 'Computer Science and Engineering',
-    status: 'draft',
-    completionPercentage: 0,
-    applicationStartDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedDate: '2025-09-06T00:00:00.000Z',
-    lastModifiedBy: 'iit@example.com'
+    criteria: createCriteriaTemplate(),
+    overallMarks: 0,
+    maxOverallMarks: 700,
+    lastModified: '2024-01-15T00:00:00Z'
   }
 ];
 
-// Storage key for SAR applications
-const SAR_APPLICATIONS_KEY = 'compliedu_sar_applications';
-
-// Initialize localStorage with mock data if empty
-const initializeMockData = (): void => {
-  try {
-    const existing = localStorage.getItem(SAR_APPLICATIONS_KEY);
-    if (!existing || JSON.parse(existing).length === 0) {
-      localStorage.setItem(SAR_APPLICATIONS_KEY, JSON.stringify(mockSARApplications));
-      console.log('Initialized mock SAR applications data');
-    }
-  } catch (error) {
-    console.error('Error initializing mock data:', error);
-    localStorage.setItem(SAR_APPLICATIONS_KEY, JSON.stringify(mockSARApplications));
+// Mock applications data
+export const applications: Application[] = [
+  {
+    id: '1',
+    institutionId: '1',
+    type: 'initial',
+    status: 'under-review',
+    submittedAt: '2024-01-20T10:30:00Z',
+    reviewedAt: '2024-01-25T14:15:00Z'
+  },
+  {
+    id: '2',
+    institutionId: '2',
+    type: 'renewal',
+    status: 'approved',
+    submittedAt: '2024-01-10T09:00:00Z',
+    reviewedAt: '2024-01-15T11:30:00Z',
+    approvedAt: '2024-01-18T16:45:00Z'
   }
-};
+];
 
-// Initialize mock data on module load
-initializeMockData();
-
-// Get SAR applications from localStorage
-const getSARApplicationsFromStorage = (): SARApplication[] => {
-  try {
-    const stored = localStorage.getItem(SAR_APPLICATIONS_KEY);
-    if (!stored) {
-      // If no data in storage, return mock data and save it
-      localStorage.setItem(SAR_APPLICATIONS_KEY, JSON.stringify(mockSARApplications));
-      return mockSARApplications;
-    }
-    return JSON.parse(stored);
-  } catch (error) {
-    console.error('Error reading SAR applications from storage:', error);
-    return mockSARApplications;
-  }
-};
-
-// Save SAR applications to localStorage
-const saveSARApplicationsToStorage = (applications: SARApplication[]): void => {
-  try {
-    localStorage.setItem(SAR_APPLICATIONS_KEY, JSON.stringify(applications));
-    console.log('SAR applications saved to storage:', applications.length);
-  } catch (error) {
-    console.error('Error saving SAR applications to storage:', error);
-  }
-};
-
-// Export sarApplications as a getter function that reads from localStorage
-export const sarApplications = getSARApplicationsFromStorage();
-
+// Helper functions
 export const getInstitutionById = (id: string): Institution | undefined => {
-  console.log('getInstitutionById called with ID:', id);
-  console.log('Available institutions:', institutions.map(i => ({ id: i.id, name: i.name })));
-  
-  const found = institutions.find(inst => inst.id === id);
-  console.log('Found institution:', found);
-  return found;
-};
-
-export const getInstitutions = (): Institution[] => {
-  return institutions;
-};
-
-export const addInstitution = (institution: Omit<Institution, 'id'>): Institution => {
-  const newInstitution: Institution = {
-    ...institution,
-    id: (institutions.length + 1).toString()
-  };
-  
-  institutions.push(newInstitution);
-  console.log('Added new institution:', newInstitution);
-  return newInstitution;
-};
-
-export const getDepartmentsByCategory = (category: string): Department[] => {
-  return departments.filter(dept => dept.category === category);
+  return institutions.find(institution => institution.id === id);
 };
 
 export const getSARApplicationsByInstitution = (institutionId: string): SARApplication[] => {
-  const allApplications = getSARApplicationsFromStorage();
-  const institutionApps = allApplications.filter(app => app.institutionId === institutionId);
-  console.log(`Found ${institutionApps.length} applications for institution ${institutionId}:`, institutionApps);
-  return institutionApps;
+  return sarApplications.filter(app => app.institutionId === institutionId);
 };
 
-// Function to get applications (for backward compatibility with InstituteDashboard)
-export const getApplications = (): Application[] => {
-  // Convert SAR applications to Application format for dashboard
-  const sarApplications = getSARApplicationsFromStorage();
-  return sarApplications.map(sarApp => ({
-    id: sarApp.id,
-    institutionId: sarApp.institutionId,
-    applicationId: sarApp.applicationId,
-    title: sarApp.departmentName,
-    type: sarApp.departmentId === 'institute-info' ? 'Institute Information' : 'Department SAR',
-    status: sarApp.status,
-    progress: sarApp.completionPercentage,
-    dueDate: new Date(new Date(sarApp.applicationStartDate).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days from start
-    lastModified: sarApp.lastModifiedDate,
-    createdDate: sarApp.applicationStartDate
-  }));
+export const getSARApplicationById = (id: string): SARApplication | undefined => {
+  return sarApplications.find(app => app.id === id);
 };
 
-export const createSARApplications = (
-  institutionId: string,
-  departmentIds: string[],
-  createdBy: string
-): SARApplication[] => {
-  const institution = getInstitutionById(institutionId);
-  if (!institution) {
-    throw new Error('Institution not found');
+export const updateSARApplication = (id: string, updates: Partial<SARApplication>): boolean => {
+  const index = sarApplications.findIndex(app => app.id === id);
+  if (index !== -1) {
+    sarApplications[index] = { ...sarApplications[index], ...updates, lastModified: new Date().toISOString() };
+    return true;
   }
-
-  const today = new Date();
-  const dateString = today.toISOString().split('T')[0].replace(/-/g, '');
-  
-  const newApplications: SARApplication[] = departmentIds.map(departmentId => {
-    const department = departments.find(d => d.id === departmentId);
-    if (!department) {
-      throw new Error(`Department ${departmentId} not found`);
-    }
-
-    return {
-      id: `${institutionId}-${departmentId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      applicationId: `${institution.institutionCode}-${departmentId}-${dateString}`,
-      institutionId,
-      departmentId,
-      departmentName: department.name,
-      status: 'draft',
-      completionPercentage: 0,
-      applicationStartDate: today.toISOString(),
-      lastModifiedDate: today.toISOString(),
-      lastModifiedBy: createdBy
-    };
-  });
-
-  // Get existing applications and add new ones
-  const existingApplications = getSARApplicationsFromStorage();
-  const updatedApplications = [...existingApplications, ...newApplications];
-  
-  // Save to localStorage
-  saveSARApplicationsToStorage(updatedApplications);
-  
-  console.log('Created new SAR applications:', newApplications);
-  return newApplications;
+  return false;
 };
 
-// New function to create institute information application
-export const createInstituteInfoApplication = (
-  institutionId: string,
-  createdBy: string
-): SARApplication => {
-  const institution = getInstitutionById(institutionId);
-  if (!institution) {
-    throw new Error('Institution not found');
-  }
+export const updateSectionData = (applicationId: string, criteriaId: string, sectionId: string, updates: Partial<SectionData>): boolean => {
+  const application = getSARApplicationById(applicationId);
+  if (!application) return false;
 
-  const today = new Date();
-  const dateString = today.toISOString().split('T')[0].replace(/-/g, '');
-  
-  const instituteInfoApp: SARApplication = {
-    id: `institute-info-${institutionId}-${Date.now()}`,
-    applicationId: `${institution.institutionCode}-IS-${dateString}`,
-    institutionId,
-    departmentId: 'institute-info',
-    departmentName: 'Institute Information',
-    status: 'draft',
-    completionPercentage: 0,
-    applicationStartDate: today.toISOString(),
-    lastModifiedDate: today.toISOString(),
-    lastModifiedBy: createdBy
-  };
+  const criteria = application.criteria.find(c => c.id === criteriaId);
+  if (!criteria) return false;
 
-  // Get existing applications and add new one
-  const existingApplications = getSARApplicationsFromStorage();
-  const updatedApplications = [...existingApplications, instituteInfoApp];
-  
-  // Save to localStorage
-  saveSARApplicationsToStorage(updatedApplications);
-  
-  console.log('Created institute information application:', instituteInfoApp);
-  return instituteInfoApp;
+  const section = criteria.sections.find(s => s.id === sectionId);
+  if (!section) return false;
+
+  Object.assign(section, updates, { lastModified: new Date().toISOString() });
+
+  // Update completion status
+  const completedSections = criteria.sections.filter(s => s.isCompleted).length;
+  criteria.completedSections = completedSections;
+
+  // Update application completion percentage
+  const totalSections = application.criteria.reduce((sum, c) => sum + c.sections.length, 0);
+  const totalCompletedSections = application.criteria.reduce((sum, c) => sum + c.completedSections, 0);
+  application.completionPercentage = totalSections > 0 ? Math.round((totalCompletedSections / totalSections) * 100) : 0;
+
+  return updateSARApplication(applicationId, application);
 };
 
-// Function to update SAR application
-export const updateSARApplication = (
-  applicationId: string,
-  updates: Partial<SARApplication>
-): SARApplication | null => {
-  const existingApplications = getSARApplicationsFromStorage();
-  const applicationIndex = existingApplications.findIndex(app => app.id === applicationId);
-  
-  if (applicationIndex === -1) {
-    console.error('Application not found:', applicationId);
-    return null;
-  }
-  
-  const updatedApplication = {
-    ...existingApplications[applicationIndex],
-    ...updates,
-    lastModifiedDate: new Date().toISOString()
-  };
-  
-  existingApplications[applicationIndex] = updatedApplication;
-  saveSARApplicationsToStorage(existingApplications);
-  
-  console.log('Updated SAR application:', updatedApplication);
-  return updatedApplication;
-};
-
-// Dashboard stats function for admin
-export const getDashboardStats = () => {
-  const allApplications = getSARApplicationsFromStorage();
-  
-  const stats = {
-    totalInstitutions: institutions.length,
-    totalRegistered: institutions.length,
-    totalApplications: allApplications.length,
-    completedApplications: allApplications.filter(app => app.status === 'completed').length,
-    inProgressApplications: allApplications.filter(app => app.status === 'in-progress').length,
-    draftApplications: allApplications.filter(app => app.status === 'draft').length,
-    submittedApplications: allApplications.filter(app => app.status === 'submitted').length,
-    preQualifiersOngoing: 0,
-    preQualifiersCompleted: institutions.filter(inst => inst.preQualifiersCompleted).length,
-    sarOngoing: allApplications.filter(app => app.status === 'in-progress').length,
-    sarCompleted: allApplications.filter(app => app.status === 'completed').length
-  };
-  
-  return stats;
+export const getApplicationsByInstitution = (institutionId: string): Application[] => {
+  return applications.filter(app => app.institutionId === institutionId);
 };
